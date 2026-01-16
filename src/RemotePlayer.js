@@ -18,6 +18,10 @@ export class RemotePlayer {
         this.mesh.castShadow = true;
         this.mesh.position.copy(this.position);
 
+        // DEBUG: Force Visibility
+        this.mesh.frustumCulled = false;
+        this.mesh.renderOrder = 999; // Draw last?
+
         // Name tag or ID?
         // for now just mesh
 
@@ -40,8 +44,10 @@ export class RemotePlayer {
         this.mesh.quaternion.slerp(this.targetQuaternion, lerpFactor);
 
         // Periodic Log
-        if (Math.random() < 0.01) {
-            console.log(`[RemotePlayer ${this.id}] Pos: ${this.mesh.position.x.toFixed(2)}, ${this.mesh.position.y.toFixed(2)}, ${this.mesh.position.z.toFixed(2)}`);
+        if (Math.random() < 0.005) {
+            const worldPos = new THREE.Vector3();
+            this.mesh.getWorldPosition(worldPos);
+            console.log(`[RemotePlayer ${this.id}] Local: ${this.mesh.position.y.toFixed(2)}, World: ${worldPos.y.toFixed(2)}, Visible: ${this.mesh.visible}`);
         }
     }
 
