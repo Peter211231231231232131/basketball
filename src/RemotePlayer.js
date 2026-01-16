@@ -12,17 +12,15 @@ export class RemotePlayer {
         this.targetPosition = this.position.clone();
         this.targetQuaternion = this.quaternion.clone();
 
-        // Mesh (Map Style - Gray Box)
-        // Mimicking World.createBox logic
-        const geometry = new THREE.BoxGeometry(1, 2, 1);
-        const material = new THREE.MeshStandardMaterial({ color: 0x888888 }); // Gray like walls
+        // Mesh (Confirmed Visible: Blue Sphere)
+        const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+        const material = new THREE.MeshBasicMaterial({ color: 0x0000ff }); // Blue, Unlit
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
 
-        // Ensure no weird override
+        // Ensure standard rendering
         this.mesh.renderOrder = 0;
-        this.mesh.frustumCulled = true;
+        this.mesh.frustumCulled = false;
 
         // Axes Helper to see rotation
         const axes = new THREE.AxesHelper(3);
