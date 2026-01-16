@@ -8,14 +8,26 @@ import { RemotePlayer } from './RemotePlayer.js';
 // import { Bot } from './Bot.js'; // Disabled for Multiplayer
 
 export class Game {
-    constructor() {
+    constructor(lobbyId) {
         this.container = document.body;
         this.score = 0;
         this.botScore = 0;
+        this.lobbyId = lobbyId; // Store lobby ID
         this.init();
     }
 
     init() {
+        // ... (Renderer setup omitted for brevity in replacement, but kept in mind) ...
+        // Note: I will only replace the top part to inject lobby logic
+
+        // Networking
+        this.socket = io();
+
+        this.socket.on('connect', () => {
+            console.log('Connected to server:', this.socket.id);
+            // Join Lobby immediately on connect
+            this.socket.emit('join_lobby', this.lobbyId);
+        });
         // Renderer
         // Optimization: Antialias OFF to boost FPS
         this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
@@ -54,12 +66,9 @@ export class Game {
         // this.bot = new Bot(this.scene, this.ball);
         this.remotePlayers = {};
 
-        // Networking
-        this.socket = io();
+        // Networking (Initialized in init start for join_lobby)
+        // this.socket assigned above
 
-        this.socket.on('connect', () => {
-            console.log('Connected to server:', this.socket.id);
-        });
 
         this.socket.on('init', (data) => {
             // Spawn existing players

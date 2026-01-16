@@ -16,61 +16,107 @@ const io = new Server(httpServer, {
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // Game State
-const players = {};
-// ballState: { ownerId: string | null, position: {x,y,z}, velocity: {x,y,z} }
-let ballState = {
-    ownerId: null,
-    position: { x: 0, y: 5, z: 0 },
-    velocity: { x: 0, y: 0, z: 0 }
-};
+const lobbies = {};
+
+function getLobby(lobbyId) {
+    if (!lobbies[lobbyId]) {
+        lobbies[lobbyId] = {
+            players: {},
+            ballState: {
+                ownerId: null,
+                position: { x: 0, y: 5, z: 0 },
+                velocity: { x: 0, y: 0, z: 0 }
+            }
+        };
+    }
+    return lobbies[lobbyId];
+}
 
 io.on('connection', (socket) => {
-    console.log('Player connected:', socket.id);
+    console.log('User connected:', socket.id);
+    // Wait for join_lobby
 
-    // Add new player
-    players[socket.id] = {
-        id: socket.id,
-        position: { x: 0, y: 2, z: 0 },
-        quaternion: { x: 0, y: 0, z: 0, w: 1 },
-        animState: 'idle'
-    };
+    socket.on('join_lobby', (lobbyId) => {
+        socket.join(lobbyId);
+        socket.lobbyId = lobbyId;
 
-    // Send current state to new player
-    socket.emit('init', { players, ballState });
+        const lobby = getLobby(lobbyId);
 
-    // Broadcast new player to others
-    socket.broadcast.emit('player_joined', players[socket.id]);
+        // Add new player to lobby
+        lobby.players[socket.id] = {
+            id: socket.id,
+            position: { x: 0, y: 2, z: 0 },
+            quaternion: { x: 0, y: 0, z: 0, w: 1 },
+            animState: 'idle'
+        };
+
+        console.log(`Player ${socket.id} joined lobby ${lobbyId}`);
+
+        // Send current lobby state to new player
+        socket.emit('init', {
+            players: lobby.players,
+            ballState: lobby.ballState
+        });
+
+        // Broadcast new player to others in lobby
+        socket.to(lobbyId).emit('player_joined', lobby.players[socket.id]);
+    });
 
     // Handle Player Movement
     socket.on('player_update', (data) => {
-        if (players[socket.id]) {
-            players[socket.id] = { ...players[socket.id], ...data };
-            // Volatile for smooth movement (drops packets if congested)
-            socket.broadcast.volatile.emit('player_moved', {
+        if (!socket.lobbyId) return;
+        const lobby = lobbies[socket.lobbyId];
+
+        if (lobby && lobby.players[socket.id]) {
+            lobby.players[socket.id] = { ...lobby.players[socket.id], ...data };
+            // Standard emit for reliability (was volatile)
+            socket.to(socket.lobbyId).emit('player_moved', {
                 id: socket.id,
                 ...data
             });
+
+            // Debug Log (Sampled)
+            if (Math.random() < 0.01) {
+                console.log(`Update from ${socket.id} in ${socket.lobbyId}`);
+            }
         }
     });
 
-    // Handle Ball Updates (Ownership change, Shot)
+    // Handle Ball Updates
     socket.on('ball_update', (data) => {
-        // Simple trust-client logic for prototype
-        ballState = { ...ballState, ...data };
-        socket.broadcast.emit('ball_updated', ballState);
+        if (!socket.lobbyId) return;
+        const lobby = lobbies[socket.lobbyId];
+
+        if (lobby) {
+            lobby.ballState = { ...lobby.ballState, ...data };
+            socket.to(socket.lobbyId).emit('ball_updated', lobby.ballState);
+        }
     });
 
     socket.on('disconnect', () => {
         console.log('Player disconnected:', socket.id);
-        delete players[socket.id];
-        io.emit('player_left', socket.id);
 
-        // If they had the ball, reset it
-        if (ballState.ownerId === socket.id) {
-            ballState.ownerId = null;
-            ballState.velocity = { x: 0, y: 0, z: 0 };
-            ballState.position = { x: 0, y: 5, z: 0 }; // Center
-            io.emit('ball_updated', ballState);
+        if (socket.lobbyId) {
+            const lobbyId = socket.lobbyId;
+            const lobby = lobbies[lobbyId];
+
+            if (lobby && lobby.players[socket.id]) {
+                delete lobby.players[socket.id];
+                io.to(lobbyId).emit('player_left', socket.id);
+
+                // Reset ball if they had it
+                if (lobby.ballState.ownerId === socket.id) {
+                    lobby.ballState.ownerId = null;
+                    lobby.ballState.velocity = { x: 0, y: 0, z: 0 };
+                    lobby.ballState.position = { x: 0, y: 5, z: 0 };
+                    io.to(lobbyId).emit('ball_updated', lobby.ballState);
+                }
+
+                // Cleanup empty lobby? (Optional, maybe later)
+                if (Object.keys(lobby.players).length === 0) {
+                    // delete lobbies[lobbyId]; 
+                }
+            }
         }
     });
 });
