@@ -31,6 +31,7 @@ export class Player {
         this.moveLeft = false;
         this.moveRight = false;
         this.canJump = false;
+        this.jumpPressed = false;
         this.isRunning = false;
         this.currentPower = 20.0; // Default power via +/-
         this.showTrajectory = true; // Default ON
@@ -109,7 +110,9 @@ export class Player {
                 case 'ArrowLeft': case 'KeyA': this.moveLeft = true; break;
                 case 'ArrowDown': case 'KeyS': this.moveBackward = true; break;
                 case 'ArrowRight': case 'KeyD': this.moveRight = true; break;
-                case 'Space': if (this.onGround) this.velocity.y = this.jumpForce; break;
+                case 'Space':
+                    if (!this.jumpPressed) this.jumpPressed = true; // Set flag for server
+                    break;
                 case 'ShiftLeft': case 'ShiftRight': this.isRunning = true; break;
 
                 // New Controls
@@ -144,129 +147,57 @@ export class Player {
         document.addEventListener('keyup', (e) => onKeyUp(e.code));
     }
 
+    getInputs() {
+        // Capture jump and reset
+        const jump = this.jumpPressed;
+        this.jumpPressed = false;
+
+        return {
+            forward: this.moveForward,
+            backward: this.moveBackward,
+            left: this.moveLeft,
+            right: this.moveRight,
+            jump: jump,
+            sprint: this.isRunning
+        };
+    }
+
+    setServerPosition(pos) {
+        // Simple Snap (Dumb Client) - later add interpolation
+        this.camera.position.set(pos.x, pos.y, pos.z);
+    }
+
     update(delta, collidables) {
         if (document.pointerLockElement !== document.body) {
-            this.velocity.set(0, 0, 0);
+            // this.velocity.set(0, 0, 0); // No local velocity resets needed
             return;
         }
 
-        // --- 1. Physics Constants & Damping ---
-        const damping = 10.0;
-        this.velocity.x -= this.velocity.x * damping * delta;
-        this.velocity.z -= this.velocity.z * damping * delta;
-        this.velocity.y -= this.gravity * delta; // Gravity always applies
+        // --- Server Authoritative Mode ---
+        // We only handle rotation input here. Position is from server.
+        // But we still need to calculate "Forward" for shooting direction etc.
 
-        // --- 2. Input Handling (Movement) ---
-        // Stamina Logic
-        let usingSprint = false;
-        if (this.isRunning && this.stamina > 0) {
-            // Moving?
-            if (this.moveForward || this.moveBackward || this.moveLeft || this.moveRight) {
-                usingSprint = true;
-                this.stamina -= this.staminaDrainRate * delta;
-                if (this.stamina < 0) this.stamina = 0;
-            }
-        } else {
-            this.stamina += this.staminaRegenRate * delta;
-            if (this.stamina > this.maxStamina) this.stamina = this.maxStamina;
-        }
+        // Inputs are captured in event listeners.
+        // We do NOT apply physics here.
 
-        const targetSpeed = this.speed * (usingSprint ? this.sprintMultiplier : 1.0);
-        const acceleration = 200.0; // High acceleration for snappy movement
-
-        // Strict Camera-Forward Movement (Y-projected)
-        // Optimization: Use this.tempVec and this.tempDir to avoid GC
-        this.tempDir.set(0, 0, 0);
-
-        // Forward
-        this.tempVec.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
-        this.tempVec.y = 0;
-        this.tempVec.normalize();
-        if (this.moveForward) this.tempDir.add(this.tempVec);
-        if (this.moveBackward) this.tempDir.sub(this.tempVec);
-
-        // Right
-        this.tempVec.set(1, 0, 0).applyQuaternion(this.camera.quaternion);
-        this.tempVec.y = 0;
-        this.tempVec.normalize();
-        if (this.moveRight) this.tempDir.add(this.tempVec);
-        if (this.moveLeft) this.tempDir.sub(this.tempVec);
-
-        if (this.tempDir.lengthSq() > 0) {
-            this.tempDir.normalize();
-            this.velocity.x += this.tempDir.x * acceleration * delta;
-            this.velocity.z += this.tempDir.z * acceleration * delta;
-        }
-
-        // Cap horizontal speed
-        const currentHorizSpeed = Math.sqrt(this.velocity.x ** 2 + this.velocity.z ** 2);
-        if (currentHorizSpeed > targetSpeed) {
-            const ratio = targetSpeed / currentHorizSpeed;
-            this.velocity.x *= ratio;
-            this.velocity.z *= ratio;
-        }
-
-        // --- 3. Sequential Axis Collision Resolution ---
-        // We apply velocity and resolve collisions immediately per axis.
-        // If we are overlapping (even with V=0), we push out by Minimum Translations.
-
-        this.onGround = false; // Reset, prove grounded in Y check
-
-        // X Axis
-        this.camera.position.x += this.velocity.x * delta;
-        this.resolveCollisions(collidables, 'x');
-
-        // Z Axis
-        this.camera.position.z += this.velocity.z * delta;
-        this.resolveCollisions(collidables, 'z');
-
-        // Y Axis
-        this.camera.position.y += this.velocity.y * delta;
-        this.resolveCollisions(collidables, 'y');
-
-        // Floor Safety (Fall Limit)
-        if (this.camera.position.y < -20) {
-            this.camera.position.set(0, 5, 5); // Respawn with offset
-            this.velocity.set(0, 0, 0);
-        }
-
-        // --- 4. Ball Interaction ---
+        // --- Ball Interaction (Local Visuals) ---
         if (this.throwCooldown > 0) {
             this.throwCooldown -= delta;
         }
 
         if (this.hasBall && this.ball) {
-            // Check if we still own it (Bot might have stolen it)
-            if (this.ball.owner !== this) {
-                this.hasBall = false;
-                return;
-            }
-
-            // Carry Ball
-            // Position it in front of camera
+            // Visual Carry
             const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion).normalize();
-            const holdPos = this.camera.position.clone().add(dir.multiplyScalar(1.0)); // 1m in front
-            holdPos.y -= 0.2; // Slightly down
+            const holdPos = this.camera.position.clone().add(dir.multiplyScalar(1.0));
+            holdPos.y -= 0.2;
             this.ball.mesh.position.copy(holdPos);
-        } else if (this.ball && !this.ball.owner) {
-            // Check Pickup only if cooldown allows
-            if (this.throwCooldown <= 0) {
-                const dist = this.camera.position.distanceTo(this.ball.mesh.position);
-                if (dist < 2.0) {
-                    // Grab!
-                    console.log("Picked up ball!");
-                    this.ball.grab(this);
-                    this.hasBall = true;
-                }
-            }
         }
 
-        // --- 5. Trajectory Update ---
+        // Trajectory
         if (this.showTrajectory && this.hasBall) {
             const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion).normalize();
             const spawnPos = this.camera.position.clone().add(dir.clone().multiplyScalar(0.5));
             const velocity = dir.multiplyScalar(this.currentPower);
-
             this.trajectory.update(spawnPos, velocity, collidables);
         } else {
             this.trajectory.setVisibility(false);

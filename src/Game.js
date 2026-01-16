@@ -112,6 +112,30 @@ export class Game {
             }
         });
 
+        this.socket.on('world_state', (state) => {
+            // Sync Players
+            for (const id in state.players) {
+                const pData = state.players[id];
+
+                if (id === this.socket.id) {
+                    // Update MYSELF (Server Authority)
+                    this.player.setServerPosition(pData.position);
+                } else {
+                    // Update Remote
+                    if (!this.remotePlayers[id]) {
+                        this.remotePlayers[id] = new RemotePlayer(this.scene, id, pData);
+                    }
+                    this.remotePlayers[id].updateData(pData);
+                }
+            }
+
+            // Sync Ball (if not owned by me)
+            if (state.ballState && !this.player.hasBall) {
+                // Hybrid: Server echoes ball state
+                // this.ball.mesh.position.copy(state.ballState.position);
+            }
+        });
+
         this.socket.on('ball_updated', (data) => {
             // If I don't own the ball, trust the server/network
             if (!this.player.hasBall) {
@@ -245,14 +269,18 @@ export class Game {
 
         // --- NETWORK SYNC ---
         if (this.socket && this.socket.connected) {
-            // Emit My State
-            this.socket.emit('player_update', {
-                position: this.player.camera.position, // Player position is camera pos approx
-                quaternion: this.player.camera.quaternion,
-                // Add Velocity/AnimState if needed
+            // Emit Inputs (Server Authoritative)
+            // We read inputs from this.player.getInputs()
+            const inputs = this.player.getInputs();
+            const viewQuat = this.player.camera.quaternion;
+
+            // Only emit if changed? For now emit every frame for smoothness/response
+            this.socket.emit('player_input', {
+                inputs: inputs,
+                quaternion: viewQuat
             });
 
-            // Emit Ball State if I own it
+            // Emit Ball State if I own it (Still Hybrid/Client Auth for Ball for now)
             if (this.player.hasBall) {
                 this.socket.emit('ball_update', {
                     ownerId: this.socket.id,
@@ -261,6 +289,10 @@ export class Game {
                 });
             }
         }
+
+        // Listen for World State (should be in init really, but placing here for context)
+        // Moved to init()
+
 
         // Updates
         const collidables = this.world.getCollidables();

@@ -15,90 +15,114 @@ const io = new Server(httpServer, {
 // Serve static files from Vite build
 app.use(express.static(path.join(__dirname, 'dist')));
 
+const THREE = require('three');
+const { ServerPlayer } = require('./src/ServerPlayer.js');
+const { ServerWorld } = require('./src/ServerWorld.js');
+
 // Game State
 const lobbies = {};
 
 function getLobby(lobbyId) {
     if (!lobbies[lobbyId]) {
+        const scene = new THREE.Scene();
+        const world = new ServerWorld(scene);
+
         lobbies[lobbyId] = {
-            players: {},
-            ballState: {
+            scene: scene,
+            world: world,
+            players: {}, // Map<socketId, ServerPlayer>
+            ballState: { // TODO: Move Ball physics to server too
                 ownerId: null,
                 position: { x: 0, y: 5, z: 0 },
                 velocity: { x: 0, y: 0, z: 0 }
-            }
+            },
+            lastTime: Date.now()
         };
+
+        console.log(`Created new lobby: ${lobbyId}`);
     }
     return lobbies[lobbyId];
 }
 
+// Server Game Loop
+const TICK_RATE = 60;
+setInterval(() => {
+    const now = Date.now();
+
+    for (const lobbyId in lobbies) {
+        const lobby = lobbies[lobbyId];
+        const delta = (now - lobby.lastTime) / 1000;
+        lobby.lastTime = now;
+
+        // Skip if huge delta (lag spike protection)
+        if (delta > 0.1) continue;
+
+        // Update Physics for all players
+        const snapshots = {};
+        for (const playerId in lobby.players) {
+            const player = lobby.players[playerId];
+            player.update(delta, lobby.world.getCollidables());
+
+            snapshots[playerId] = {
+                id: player.id,
+                position: player.position,
+                quaternion: player.quaternion // View direction from client
+            };
+        }
+
+        // Broadcast World State
+        // Only if players exist
+        if (Object.keys(lobby.players).length > 0) {
+            io.to(lobbyId).emit('world_state', {
+                players: snapshots,
+                ballState: lobby.ballState
+            });
+        }
+    }
+}, 1000 / TICK_RATE);
+
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
-    // Wait for join_lobby
 
     socket.on('join_lobby', (lobbyId) => {
-        if (!lobbyId) {
-            console.warn(`Socket ${socket.id} tried to join empty lobbyId`);
-            return;
-        }
+        if (!lobbyId) return;
 
         socket.join(lobbyId);
         socket.lobbyId = lobbyId;
 
         const lobby = getLobby(lobbyId);
 
-        // Add new player to lobby
-        lobby.players[socket.id] = {
-            id: socket.id,
-            position: { x: 0, y: 2, z: 0 },
-            quaternion: { x: 0, y: 0, z: 0, w: 1 },
-            animState: 'idle'
-        };
+        // Create Server Player
+        const player = new ServerPlayer(socket.id);
+        lobby.players[socket.id] = player;
 
-        const playerCount = Object.keys(lobby.players).length;
-        console.log(`Player ${socket.id} joined lobby '${lobbyId}'. Total in lobby: ${playerCount}`);
+        console.log(`Player ${socket.id} joined lobby '${lobbyId}' (Server Authoritative)`);
 
-        // Send current lobby state to new player
+        // Send Initial Confirmation ??
+        // Actually client waits for world_state usually, but let's give init for immediate confirm
         socket.emit('init', {
-            players: lobby.players,
-            ballState: lobby.ballState
+            players: {}, // Deprecated, client should rely on world_state
+            startPos: player.position
         });
-
-        // Broadcast new player to others in lobby
-        // Log who we are broadcasting to
-        // Note: socket.to(lobbyId) excludes sender
-        console.log(`Broadcasting player_joined for ${socket.id} to room '${lobbyId}'`);
-        socket.to(lobbyId).emit('player_joined', lobby.players[socket.id]);
     });
 
-    // Handle Player Movement
-    socket.on('player_update', (data) => {
+    // Receive Inputs
+    socket.on('player_input', (data) => {
         if (!socket.lobbyId) return;
         const lobby = lobbies[socket.lobbyId];
-
         if (lobby && lobby.players[socket.id]) {
-            lobby.players[socket.id] = { ...lobby.players[socket.id], ...data };
-            // Standard emit for reliability (was volatile)
-            socket.to(socket.lobbyId).emit('player_moved', {
-                id: socket.id,
-                ...data
-            });
-
-            // Debug Log (Sampled)
-            if (Math.random() < 0.01) {
-                console.log(`Update from ${socket.id} in ${socket.lobbyId}`);
-            }
+            lobby.players[socket.id].setInputs(data);
         }
     });
 
-    // Handle Ball Updates
+    // Handle Ball Updates (Still Client Auth for now? Or Hybrid?)
+    // Plan: Server Auth movement, Client Auth Ball (for now, to limit scope)
     socket.on('ball_update', (data) => {
         if (!socket.lobbyId) return;
         const lobby = lobbies[socket.lobbyId];
-
         if (lobby) {
             lobby.ballState = { ...lobby.ballState, ...data };
-            socket.to(socket.lobbyId).emit('ball_updated', lobby.ballState);
+            // We broadcast ball state in the tick loop
         }
     });
 
@@ -113,17 +137,11 @@ io.on('connection', (socket) => {
                 delete lobby.players[socket.id];
                 io.to(lobbyId).emit('player_left', socket.id);
 
-                // Reset ball if they had it
+                // Reset ball
                 if (lobby.ballState.ownerId === socket.id) {
                     lobby.ballState.ownerId = null;
                     lobby.ballState.velocity = { x: 0, y: 0, z: 0 };
                     lobby.ballState.position = { x: 0, y: 5, z: 0 };
-                    io.to(lobbyId).emit('ball_updated', lobby.ballState);
-                }
-
-                // Cleanup empty lobby? (Optional, maybe later)
-                if (Object.keys(lobby.players).length === 0) {
-                    // delete lobbies[lobbyId]; 
                 }
             }
         }
