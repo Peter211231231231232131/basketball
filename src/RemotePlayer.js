@@ -11,12 +11,11 @@ export class RemotePlayer {
         this.targetPosition = this.position.clone();
         this.targetQuaternion = this.quaternion.clone();
 
-        // Mesh (Debug Box)
-        const geometry = new THREE.BoxGeometry(1, 2, 1);
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // GREEN for Isolation Test
+        // Mesh (Bot Visuals - Capsule)
+        const geometry = new THREE.CapsuleGeometry(0.5, 1, 4, 8);
+        const material = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // Red Bot Style
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
-        this.mesh.position.copy(this.position);
 
         // Name tag or ID?
         // for now just mesh
