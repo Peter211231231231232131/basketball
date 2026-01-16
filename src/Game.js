@@ -369,30 +369,18 @@ export class Game {
 
             // --- GLOBAL VISUALS MANAGER ---
             if (!this.remoteVisuals[id]) {
-                // Create Visual (Blocky Model)
-                const group = new THREE.Group();
-
-                // Body
-                const body = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.6, 1.2, 0.4),
+                // Create Visual (Blue Sphere - User Requested)
+                const sphere = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.5, 16, 16),
                     new THREE.MeshBasicMaterial({ color: 0x0000ff })
                 );
-                body.position.y = 0.6;
-                body.castShadow = true;
-                group.add(body);
+                // No offset needed if center is pivot. If pivot is feet, maybe +0.5?
+                // The "Blue Sphere" global probe was centered.
+                sphere.castShadow = true;
 
-                // Head
-                const head = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.4, 0.4, 0.4),
-                    new THREE.MeshBasicMaterial({ color: 0xffff00 })
-                );
-                head.position.y = 1.4;
-                head.castShadow = true;
-                group.add(head);
-
-                this.scene.add(group);
-                this.remoteVisuals[id] = group;
-                console.log("VisualManager: Created model for", id);
+                this.scene.add(sphere);
+                this.remoteVisuals[id] = sphere;
+                console.log("VisualManager: Created Sphere for", id);
             }
 
             // Sync Visual to Data
