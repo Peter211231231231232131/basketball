@@ -13,7 +13,7 @@ export class RemotePlayer {
 
         // Mesh (Debug Box)
         const geometry = new THREE.BoxGeometry(1, 2, 1);
-        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red, unlit
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // GREEN for Isolation Test
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.position.copy(this.position);
@@ -34,9 +34,12 @@ export class RemotePlayer {
     }
 
     update(delta) {
-        // Interpolate smooth movement
+        // ISOLATION TEST: Ignore server, force position
+        // this.mesh.position.lerp(this.targetPosition, lerpFactor);
+        this.mesh.position.set(0, 5, -10); // Directly in front
+
+        // Keep rotation for fun
         const lerpFactor = 10.0 * delta; // Adjust for smoothness
-        this.mesh.position.lerp(this.targetPosition, lerpFactor);
         this.mesh.quaternion.slerp(this.targetQuaternion, lerpFactor);
     }
 
