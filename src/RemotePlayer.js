@@ -12,20 +12,12 @@ export class RemotePlayer {
         this.targetPosition = this.position.clone();
         this.targetQuaternion = this.quaternion.clone();
 
-        // Mesh (Confirmed Visible: Blue Sphere)
-        const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-        geometry.translate(0, 2, 0); // LIFT IT UP! (Replicating the "High Sphere" that worked)
-        const material = new THREE.MeshBasicMaterial({
-            color: 0x0000ff,
-            depthTest: false, // FORCE SEE THROUGH WALLS/FLOOR
-            transparent: true
-        });
+        // Mesh (Reverted to standard box to let Probe do the work)
+        const geometry = new THREE.BoxGeometry(1, 2, 1);
+        const material = new THREE.MeshStandardMaterial({ color: 0x888888 });
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
-
-        // Ensure standard rendering
-        this.mesh.renderOrder = 9999; // ON TOP
-        this.mesh.frustumCulled = false;
+        this.mesh.receiveShadow = true;
 
         console.log(`[RemotePlayer] Created ${id} at ${this.position.x}, ${this.position.y}, ${this.position.z}`);
         this.scene.add(this.mesh);
