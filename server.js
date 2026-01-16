@@ -37,6 +37,11 @@ io.on('connection', (socket) => {
     // Wait for join_lobby
 
     socket.on('join_lobby', (lobbyId) => {
+        if (!lobbyId) {
+            console.warn(`Socket ${socket.id} tried to join empty lobbyId`);
+            return;
+        }
+
         socket.join(lobbyId);
         socket.lobbyId = lobbyId;
 
@@ -50,7 +55,8 @@ io.on('connection', (socket) => {
             animState: 'idle'
         };
 
-        console.log(`Player ${socket.id} joined lobby ${lobbyId}`);
+        const playerCount = Object.keys(lobby.players).length;
+        console.log(`Player ${socket.id} joined lobby '${lobbyId}'. Total in lobby: ${playerCount}`);
 
         // Send current lobby state to new player
         socket.emit('init', {
@@ -59,6 +65,9 @@ io.on('connection', (socket) => {
         });
 
         // Broadcast new player to others in lobby
+        // Log who we are broadcasting to
+        // Note: socket.to(lobbyId) excludes sender
+        console.log(`Broadcasting player_joined for ${socket.id} to room '${lobbyId}'`);
         socket.to(lobbyId).emit('player_joined', lobby.players[socket.id]);
     });
 

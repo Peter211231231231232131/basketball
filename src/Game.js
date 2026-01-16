@@ -71,9 +71,12 @@ export class Game {
 
 
         this.socket.on('init', (data) => {
+            console.log("Received INIT payload:", data);
+            console.log("Existing players count:", Object.keys(data.players || {}).length);
             // Spawn existing players
             for (const id in data.players) {
                 if (id !== this.socket.id) {
+                    console.log("Spawning existing player:", id);
                     this.remotePlayers[id] = new RemotePlayer(this.scene, id, data.players[id]);
                 }
             }
@@ -91,7 +94,7 @@ export class Game {
         });
 
         this.socket.on('player_joined', (data) => {
-            console.log('Player joined:', data.id);
+            console.log('EVENT: player_joined:', data.id);
             this.remotePlayers[data.id] = new RemotePlayer(this.scene, data.id, data);
         });
 
