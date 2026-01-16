@@ -105,6 +105,7 @@ export class Player {
         // Pickup Logic in update loop is better, but maybe 'E' to pickup?
         // User asked for "fight", so auto-pickup on collision/proximity is best for fast pacing.
         const onKey = (code) => {
+            console.log("[Player] Key Down:", code); // Debug
             switch (code) {
                 case 'ArrowUp': case 'KeyW': this.moveForward = true; break;
                 case 'ArrowLeft': case 'KeyA': this.moveLeft = true; break;

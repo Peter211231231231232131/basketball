@@ -1,28 +1,25 @@
 import { Game } from './Game.js';
 
 const lobbyUI = document.getElementById('lobby-ui');
-const lobbyInput = document.getElementById('lobby-input');
+
+// DEBUG: Force Auto-Join Global Lobby
+if (lobbyUI) lobbyUI.style.display = 'none';
+new Game("Global");
+
+/*
+// Original Logic
+const lobbyInput = document.getElementById('lobby-name'); // Check HTML ID
 const joinBtn = document.getElementById('join-btn');
 
 function joinGame() {
     let lobbyName = lobbyInput.value.trim();
-    if (!lobbyName) {
-        lobbyName = "lobby1"; // Default to lobby1
-    }
-
-    // Hide UI
+    if (!lobbyName) lobbyName = "lobby1";
     lobbyUI.style.display = 'none';
-
-    // Start Game with Lobby ID
-    try {
-        const game = new Game(lobbyName);
-    } catch (e) {
-        console.error(e);
-        alert("Game Init Error: " + e.message + "\n" + e.stack);
-    }
+    new Game(lobbyName);
 }
 
-joinBtn.addEventListener('click', joinGame);
-lobbyInput.addEventListener('keypress', (e) => {
+if (joinBtn) joinBtn.addEventListener('click', joinGame);
+if (lobbyInput) lobbyInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') joinGame();
 });
+*/
