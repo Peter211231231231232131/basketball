@@ -132,10 +132,13 @@ io.on('connection', (socket) => {
         const lobby = getLobby(lobbyId);
 
         // Create Server Player
-        const player = new ServerPlayer(socket.id);
+        // Randomize Start Position to prevent overlap
+        const startX = (Math.random() * 10) - 5;
+        const startZ = (Math.random() * 10) + 10; // Near hoop area
+        const player = new ServerPlayer(socket.id, { x: startX, y: 5, z: startZ });
         lobby.players[socket.id] = player;
 
-        console.log(`Player ${socket.id} joined lobby '${lobbyId}' (Server Authoritative)`);
+        console.log(`Player ${socket.id} joined lobby '${lobbyId}' at ${startX.toFixed(2)}, ${startZ.toFixed(2)}`);
 
         // Send Initial Confirmation ??
         // Actually client waits for world_state usually, but let's give init for immediate confirm
