@@ -63,14 +63,6 @@ export class Game {
         // Particles
         this.particleSystem = new ParticleSystem(this.scene);
 
-        // DEBUG: Reference Cube to verify rendering
-        const debugGeo = new THREE.BoxGeometry(2, 2, 2);
-        const debugMat = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // Yellow
-        this.debugCube = new THREE.Mesh(debugGeo, debugMat);
-        this.debugCube.position.set(0, 5, 0); // High up
-        this.scene.add(this.debugCube);
-        console.log("DEBUG: Added Reference Cube at (0,5,0)");
-
         // Player
         this.player = new Player(this.camera, this.scene);
         this.player.assignBall(this.ball);
@@ -313,13 +305,6 @@ export class Game {
             this.fpsCounter.innerText = `FPS: ${this.frameCount}`;
             this.frameCount = 0;
             this.lastFpsTime = now;
-        }
-
-        // DEBUG: Scene Graph Check (Every ~5 seconds)
-        if (this.frameCount % 300 === 0) {
-            console.log(`[Scene] Children Count: ${this.scene.children.length}`);
-            const types = this.scene.children.map(c => c.type).reduce((acc, t) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {});
-            console.log("[Scene] Composition:", JSON.stringify(types));
         }
 
         // --- NETWORK SYNC ---

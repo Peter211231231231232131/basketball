@@ -11,16 +11,12 @@ export class RemotePlayer {
         this.targetPosition = this.position.clone();
         this.targetQuaternion = this.quaternion.clone();
 
-        // Mesh (Debug Box) - INCREASED SIZE FOR VISIBILITY
-        const geometry = new THREE.BoxGeometry(2, 4, 2);
+        // Mesh (Debug Box)
+        const geometry = new THREE.BoxGeometry(1, 2, 1);
         const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red, unlit
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.position.copy(this.position);
-
-        // DEBUG: Force Visibility
-        this.mesh.frustumCulled = false;
-        this.mesh.renderOrder = 999; // Draw last?
 
         // Name tag or ID?
         // for now just mesh
@@ -42,13 +38,6 @@ export class RemotePlayer {
         const lerpFactor = 10.0 * delta; // Adjust for smoothness
         this.mesh.position.lerp(this.targetPosition, lerpFactor);
         this.mesh.quaternion.slerp(this.targetQuaternion, lerpFactor);
-
-        // Periodic Log
-        if (Math.random() < 0.005) {
-            const worldPos = new THREE.Vector3();
-            this.mesh.getWorldPosition(worldPos);
-            console.log(`[RemotePlayer ${this.id}] Local: ${this.mesh.position.y.toFixed(2)}, World: ${worldPos.y.toFixed(2)}, Visible: ${this.mesh.visible}`);
-        }
     }
 
     dispose() {

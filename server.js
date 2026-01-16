@@ -134,7 +134,7 @@ io.on('connection', (socket) => {
         // Create Server Player
         // Randomize Start Position to prevent overlap
         const startX = (Math.random() * 10) - 5;
-        const startZ = (Math.random() * 5) + 10; // Near hoop area (10 to 15)
+        const startZ = (Math.random() * 4) - 12; // In front of camera (Z = -8 to -12)
         const player = new ServerPlayer(socket.id, { x: startX, y: 5, z: startZ });
         lobby.players[socket.id] = player;
 
