@@ -12,11 +12,22 @@ export class RemotePlayer {
         this.targetPosition = this.position.clone();
         this.targetQuaternion = this.quaternion.clone();
 
-        // Mesh (Bot Visuals - Capsule)
-        const geometry = new THREE.CapsuleGeometry(0.5, 1, 4, 8);
-        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red Basic (Unlit)
+        // Mesh (Debug: X-Ray Sphere)
+        const geometry = new THREE.SphereGeometry(1, 16, 16);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0x00ff00,
+            wireframe: true,
+            side: THREE.DoubleSide,
+            depthTest: false, // See through walls
+            transparent: true
+        });
         this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.castShadow = true;
+        this.mesh.renderOrder = 9999; // Draw on top
+        this.mesh.frustumCulled = false; // Always draw
+
+        // Axes Helper to see rotation
+        const axes = new THREE.AxesHelper(3);
+        this.mesh.add(axes);
 
         console.log(`[RemotePlayer] Created ${id} at ${this.position.x}, ${this.position.y}, ${this.position.z}`);
         this.scene.add(this.mesh);
