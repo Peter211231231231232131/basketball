@@ -22,6 +22,15 @@ const { ServerWorld } = require('./src/ServerWorld.js');
 // Game State
 const lobbies = {};
 
+// API Endpoint to list lobbies
+app.get('/api/lobbies', (req, res) => {
+    const list = Object.keys(lobbies).map(id => ({
+        id: id,
+        count: Object.keys(lobbies[id].players).length
+    }));
+    res.json(list);
+});
+
 function getLobby(lobbyId) {
     if (!lobbies[lobbyId]) {
         const scene = new THREE.Scene();
