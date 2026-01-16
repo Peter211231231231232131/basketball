@@ -12,18 +12,17 @@ export class RemotePlayer {
         this.targetPosition = this.position.clone();
         this.targetQuaternion = this.quaternion.clone();
 
-        // Mesh (Debug: X-Ray Sphere)
-        const geometry = new THREE.SphereGeometry(1, 16, 16);
-        const material = new THREE.MeshBasicMaterial({
-            color: 0x00ff00,
-            wireframe: true,
-            side: THREE.DoubleSide,
-            depthTest: false, // See through walls
-            transparent: true
-        });
+        // Mesh (Map Style - Gray Box)
+        // Mimicking World.createBox logic
+        const geometry = new THREE.BoxGeometry(1, 2, 1);
+        const material = new THREE.MeshStandardMaterial({ color: 0x888888 }); // Gray like walls
         this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.renderOrder = 9999; // Draw on top
-        this.mesh.frustumCulled = false; // Always draw
+        this.mesh.castShadow = true;
+        this.mesh.receiveShadow = true;
+
+        // Ensure no weird override
+        this.mesh.renderOrder = 0;
+        this.mesh.frustumCulled = true;
 
         // Axes Helper to see rotation
         const axes = new THREE.AxesHelper(3);
@@ -31,6 +30,15 @@ export class RemotePlayer {
 
         console.log(`[RemotePlayer] Created ${id} at ${this.position.x}, ${this.position.y}, ${this.position.z}`);
         this.scene.add(this.mesh);
+
+        // Verify attachment
+        setTimeout(() => {
+            if (this.mesh.parent !== this.scene) {
+                console.error("[RemotePlayer] Mesh NOT attached to scene!");
+            } else {
+                console.log("[RemotePlayer] Mesh successfully attached to scene UUID:", this.scene.uuid);
+            }
+        }, 100);
 
         // HTML Label (Debug Overlay)
         this.label = document.createElement('div');
