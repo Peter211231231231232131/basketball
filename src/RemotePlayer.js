@@ -13,7 +13,7 @@ export class RemotePlayer {
 
         // Mesh (Bot Visuals - Capsule)
         const geometry = new THREE.CapsuleGeometry(0.5, 1, 4, 8);
-        const material = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // Red Bot Style
+        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red Basic (Unlit)
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
 

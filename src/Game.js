@@ -48,7 +48,7 @@ export class Game {
         // Scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87CEEB);
-        this.scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
+        // this.scene.fog = new THREE.Fog(0x87CEEB, 10, 50); // Disabled for debugging visibility
 
         // Camera
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
