@@ -34,12 +34,9 @@ export class RemotePlayer {
     }
 
     update(delta) {
-        // ISOLATION TEST: Ignore server, force position
-        // this.mesh.position.lerp(this.targetPosition, lerpFactor);
-        this.mesh.position.set(0, 5, -10); // Directly in front
-
-        // Keep rotation for fun
+        // Interpolate smooth movement
         const lerpFactor = 10.0 * delta; // Adjust for smoothness
+        this.mesh.position.lerp(this.targetPosition, lerpFactor);
         this.mesh.quaternion.slerp(this.targetQuaternion, lerpFactor);
     }
 

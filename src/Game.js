@@ -71,6 +71,13 @@ export class Game {
         // this.bot = new Bot(this.scene, this.ball);
         this.remotePlayers = {};
 
+        // DEBUG: Line Renderer
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xff0000 });
+        this.debugLine = new THREE.Line(lineGeo, lineMat);
+        this.debugLine.frustumCulled = false; // Always draw
+        this.scene.add(this.debugLine);
+
         // Networking (Initialized in init start for join_lobby)
         // this.socket assigned above
 
@@ -351,6 +358,21 @@ export class Game {
         // Update Remote Players
         for (const id in this.remotePlayers) {
             this.remotePlayers[id].update(delta);
+        }
+
+        // DEBUG: Update Line to first remote player
+        const ids = Object.keys(this.remotePlayers);
+        if (ids.length > 0) {
+            const target = this.remotePlayers[ids[0]];
+            const start = this.player.camera.position;
+            const end = target.mesh.position;
+
+            const points = [start, end];
+            this.debugLine.geometry.setFromPoints(points);
+
+            if (this.frameCount % 60 === 0) {
+                console.log(`[Debug Line] Dist: ${start.distanceTo(end).toFixed(2)}, Start: ${start.y.toFixed(1)}, End: ${end.y.toFixed(1)}`);
+            }
         }
 
         this.ball.update(delta, collidables);
