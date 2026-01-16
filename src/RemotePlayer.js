@@ -14,12 +14,16 @@ export class RemotePlayer {
 
         // Mesh (Confirmed Visible: Blue Sphere)
         const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-        const material = new THREE.MeshBasicMaterial({ color: 0x0000ff }); // Blue, Unlit
+        const material = new THREE.MeshBasicMaterial({
+            color: 0x0000ff,
+            depthTest: false, // FORCE SEE THROUGH WALLS/FLOOR
+            transparent: true
+        });
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
 
         // Ensure standard rendering
-        this.mesh.renderOrder = 0;
+        this.mesh.renderOrder = 9999; // ON TOP
         this.mesh.frustumCulled = false;
 
         // Axes Helper to see rotation
@@ -63,6 +67,11 @@ export class RemotePlayer {
         const lerpFactor = 10.0 * delta; // Adjust for smoothness
         this.mesh.position.lerp(this.targetPosition, lerpFactor);
         this.mesh.quaternion.slerp(this.targetQuaternion, lerpFactor);
+
+        // FAILSAFE: Force above ground
+        if (this.mesh.position.y < 0.5) {
+            this.mesh.position.y = 0.5;
+        }
 
         // Update Label Position
         if (this.label && this.camera) {
