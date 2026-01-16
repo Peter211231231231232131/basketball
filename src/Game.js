@@ -144,6 +144,15 @@ export class Game {
                 }
             }
 
+            // Update Debug Overlay
+            let debugText = `<b>Packet: ${Date.now()}</b><br>`;
+            debugText += `My ID: ${this.socket.id}<br>`;
+            for (const id in state.players) {
+                const p = state.players[id].position;
+                debugText += `${id.slice(0, 4)}: [${p.x.toFixed(1)}, ${p.y.toFixed(1)}, ${p.z.toFixed(1)}]<br>`;
+            }
+            this.debugDiv.innerHTML = debugText;
+
             // Sync Ball (if not owned by me)
             if (state.ballState && !this.player.hasBall) {
                 // Hybrid: Server echoes ball state
