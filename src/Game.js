@@ -91,7 +91,7 @@ export class Game {
             for (const id in data.players) {
                 if (id !== this.socket.id) {
                     console.log("Spawning existing player:", id);
-                    this.remotePlayers[id] = new RemotePlayer(this.scene, id, data.players[id]);
+                    this.remotePlayers[id] = new RemotePlayer(this.scene, this.camera, id, data.players[id]);
                 }
             }
             // Sync Ball
@@ -109,7 +109,7 @@ export class Game {
 
         this.socket.on('player_joined', (data) => {
             console.log('EVENT: player_joined:', data.id);
-            this.remotePlayers[data.id] = new RemotePlayer(this.scene, data.id, data);
+            this.remotePlayers[data.id] = new RemotePlayer(this.scene, this.camera, data.id, data);
         });
 
         this.socket.on('player_moved', (data) => {
@@ -138,7 +138,7 @@ export class Game {
                     // Update Remote
                     if (!this.remotePlayers[id]) {
                         console.log(`[Game] Found new remote player ${id} in world_state`);
-                        this.remotePlayers[id] = new RemotePlayer(this.scene, id, pData);
+                        this.remotePlayers[id] = new RemotePlayer(this.scene, this.camera, id, pData);
                     }
                     this.remotePlayers[id].updateData(pData);
                 }
