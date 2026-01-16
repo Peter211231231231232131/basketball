@@ -11,8 +11,8 @@ export class RemotePlayer {
         this.targetPosition = this.position.clone();
         this.targetQuaternion = this.quaternion.clone();
 
-        // Mesh (Debug Box)
-        const geometry = new THREE.BoxGeometry(1, 2, 1);
+        // Mesh (Debug Box) - INCREASED SIZE FOR VISIBILITY
+        const geometry = new THREE.BoxGeometry(2, 4, 2);
         const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red, unlit
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
@@ -26,7 +26,10 @@ export class RemotePlayer {
     }
 
     updateData(data) {
-        if (data.position) this.targetPosition.set(data.position.x, data.position.y, data.position.z);
+        if (data.position) {
+            // console.log(`[RemotePlayer ${this.id}] Recv Pos:`, data.position);
+            this.targetPosition.set(data.position.x, data.position.y, data.position.z);
+        }
         if (data.quaternion) this.targetQuaternion.set(data.quaternion.x, data.quaternion.y, data.quaternion.z, data.quaternion.w);
     }
 
@@ -35,6 +38,11 @@ export class RemotePlayer {
         const lerpFactor = 10.0 * delta; // Adjust for smoothness
         this.mesh.position.lerp(this.targetPosition, lerpFactor);
         this.mesh.quaternion.slerp(this.targetQuaternion, lerpFactor);
+
+        // Periodic Log
+        if (Math.random() < 0.01) {
+            console.log(`[RemotePlayer ${this.id}] Pos: ${this.mesh.position.x.toFixed(2)}, ${this.mesh.position.y.toFixed(2)}, ${this.mesh.position.z.toFixed(2)}`);
+        }
     }
 
     dispose() {
