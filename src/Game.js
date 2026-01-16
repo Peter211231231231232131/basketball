@@ -363,8 +363,8 @@ export class Game {
             // DEBUG PROBE CHASE (Restored)
             if (!targetFound) {
                 const p = this.remotePlayers[id].mesh.position;
-                // Hover 2 meters above the player
-                this.debugSphere.position.set(p.x, p.y + 2, p.z);
+                // Match player position exactly
+                this.debugSphere.position.set(p.x, p.y, p.z);
                 targetFound = true;
             }
         }
