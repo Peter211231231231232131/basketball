@@ -28,6 +28,11 @@ export class Game {
             // Join Lobby immediately on connect
             this.socket.emit('join_lobby', this.lobbyId);
         });
+
+        this.socket.on('connect_error', (err) => {
+            console.error('Connection Error:', err);
+            // Force transport if needed?
+        });
         // Renderer
         // Optimization: Antialias OFF to boost FPS
         this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
