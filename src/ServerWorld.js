@@ -15,6 +15,7 @@ class ServerWorld {
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.position.y = -0.5;
         this.scene.add(floor);
+        floor.updateMatrixWorld(true);
         this.collidables.push(floor);
 
         // Side Walls

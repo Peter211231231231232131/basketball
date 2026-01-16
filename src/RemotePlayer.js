@@ -13,7 +13,7 @@ export class RemotePlayer {
 
         // Mesh (Debug Box)
         const geometry = new THREE.BoxGeometry(1, 2, 1);
-        const material = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // Red
+        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red, unlit
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.position.copy(this.position);

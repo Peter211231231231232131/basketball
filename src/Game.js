@@ -270,6 +270,18 @@ export class Game {
         this.fpsCounter.innerText = 'FPS: 60';
         document.body.appendChild(this.fpsCounter);
 
+        // Debug Overlay
+        this.debugDiv = document.createElement('div');
+        this.debugDiv.style.position = 'absolute';
+        this.debugDiv.style.top = '100px';
+        this.debugDiv.style.left = '10px';
+        this.debugDiv.style.color = 'white';
+        this.debugDiv.style.fontFamily = 'monospace';
+        this.debugDiv.style.fontSize = '12px';
+        this.debugDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        this.debugDiv.style.padding = '5px';
+        document.body.appendChild(this.debugDiv);
+
         this.lastTime = performance.now();
         this.frameCount = 0;
         this.lastFpsTime = this.lastTime;
