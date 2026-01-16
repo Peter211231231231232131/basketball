@@ -14,6 +14,7 @@ export class RemotePlayer {
 
         // Mesh (Confirmed Visible: Blue Sphere)
         const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+        geometry.translate(0, 2, 0); // LIFT IT UP! (Replicating the "High Sphere" that worked)
         const material = new THREE.MeshBasicMaterial({
             color: 0x0000ff,
             depthTest: false, // FORCE SEE THROUGH WALLS/FLOOR
@@ -25,10 +26,6 @@ export class RemotePlayer {
         // Ensure standard rendering
         this.mesh.renderOrder = 9999; // ON TOP
         this.mesh.frustumCulled = false;
-
-        // Axes Helper to see rotation
-        const axes = new THREE.AxesHelper(3);
-        this.mesh.add(axes);
 
         console.log(`[RemotePlayer] Created ${id} at ${this.position.x}, ${this.position.y}, ${this.position.z}`);
         this.scene.add(this.mesh);
@@ -67,11 +64,6 @@ export class RemotePlayer {
         const lerpFactor = 10.0 * delta; // Adjust for smoothness
         this.mesh.position.lerp(this.targetPosition, lerpFactor);
         this.mesh.quaternion.slerp(this.targetQuaternion, lerpFactor);
-
-        // FAILSAFE: Force above ground
-        if (this.mesh.position.y < 0.5) {
-            this.mesh.position.y = 0.5;
-        }
 
         // Update Label Position
         if (this.label && this.camera) {
