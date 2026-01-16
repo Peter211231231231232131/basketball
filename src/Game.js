@@ -369,14 +369,18 @@ export class Game {
 
             // --- GLOBAL VISUALS MANAGER ---
             if (!this.remoteVisuals[id]) {
-                // Create Visual (Blue Sphere - User Requested)
+                // Create Visual (Blue Sphere - User Requested + X-Ray)
                 const sphere = new THREE.Mesh(
                     new THREE.SphereGeometry(0.5, 16, 16),
-                    new THREE.MeshBasicMaterial({ color: 0x0000ff })
+                    new THREE.MeshBasicMaterial({
+                        color: 0x0000ff,
+                        depthTest: false, // X-RAY VISION (Always Visible)
+                        transparent: true,
+                        opacity: 0.8
+                    })
                 );
-                // No offset needed if center is pivot. If pivot is feet, maybe +0.5?
-                // The "Blue Sphere" global probe was centered.
                 sphere.castShadow = true;
+                sphere.renderOrder = 999; // Draw on top
 
                 this.scene.add(sphere);
                 this.remoteVisuals[id] = sphere;
@@ -387,8 +391,12 @@ export class Game {
             const data = this.remotePlayers[id];
             if (this.remoteVisuals[id]) {
                 // Determine position
-                // Use data.position directly (which is interpolated)
-                this.remoteVisuals[id].position.copy(data.position);
+                // User requested +5 Height Offset
+                this.remoteVisuals[id].position.set(
+                    data.position.x,
+                    data.position.y + 5.0,
+                    data.position.z
+                );
                 this.remoteVisuals[id].quaternion.copy(data.quaternion);
             }
         }
