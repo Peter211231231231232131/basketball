@@ -222,6 +222,20 @@ export class Player {
         // We will move the throw event emission to the Key/Mouse listener in Player.js -> Game.js?
         // Let's make Player.js emit a custom event or check flags.
 
+        // --- Auto Pickup Logic ---
+        if (!this.hasBall && this.ball && !this.ball.owner && this.throwCooldown <= 0) {
+            const dist = this.camera.position.distanceTo(this.ball.mesh.position);
+            if (dist < 2.0) { // Pickup Radius
+                console.log("Auto Picking Up Ball");
+                this.hasBall = true;
+                this.ball.owner = this; // Local claim
+                // We should notify server?
+                // Current logic: Game.js sends 'ball_update' based on ownership?
+                // Or we assume 'throw' is the only event.
+                // Ideally we emit 'ball_claimed' but for now local logic triggers visuals.
+            }
+        }
+
 
         // Trajectory
         if (this.showTrajectory && this.hasBall) {

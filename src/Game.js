@@ -74,13 +74,6 @@ export class Game {
         // Networking (Initialized in init start for join_lobby)
         // this.socket assigned above
 
-        // GLOBAL DEBUG PROBE (Blue Sphere) - RESTORED
-        const debugGeo = new THREE.SphereGeometry(0.5, 16, 16);
-        const debugMat = new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: false });
-        this.debugSphere = new THREE.Mesh(debugGeo, debugMat);
-        this.scene.add(this.debugSphere);
-        console.log("Global Debug Sphere RESTORED to scene");
-
         // Handle Throw Event
         this.player.onThrow((pos, vel) => {
             this.socket.emit('ball_update', {
@@ -356,22 +349,8 @@ export class Game {
         this.player.update(delta, collidables);
 
         // Update Remote Players
-        let targetFound = false;
         for (const id in this.remotePlayers) {
             this.remotePlayers[id].update(delta);
-
-            // DEBUG PROBE CHASE (Restored)
-            if (!targetFound) {
-                const p = this.remotePlayers[id].mesh.position;
-                // Match player position exactly
-                this.debugSphere.position.set(p.x, p.y, p.z);
-                targetFound = true;
-            }
-        }
-
-        if (!targetFound) {
-            // Idle animation if no players
-            this.debugSphere.position.set(0, 5 + Math.sin(Date.now() * 0.005), 0);
         }
 
         this.ball.update(delta, collidables);

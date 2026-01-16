@@ -12,12 +12,27 @@ export class RemotePlayer {
         this.targetPosition = this.position.clone();
         this.targetQuaternion = this.quaternion.clone();
 
-        // Mesh (Reverted to standard box to let Probe do the work)
-        const geometry = new THREE.BoxGeometry(1, 2, 1);
-        const material = new THREE.MeshStandardMaterial({ color: 0x888888 });
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
+        // Mesh Container (Group)
+        this.mesh = new THREE.Group();
+
+        // Body (Blue Box)
+        const bodyGeo = new THREE.BoxGeometry(0.6, 1.2, 0.4);
+        const bodyMat = new THREE.MeshBasicMaterial({ color: 0x0000ff }); // Blue
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.6; // Center of body is 0.6 up (so feet at 0)
+        body.castShadow = true;
+        this.mesh.add(body);
+
+        // Head (Yellow Box)
+        const headGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+        const headMat = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // Yellow
+        const head = new THREE.Mesh(headGeo, headMat);
+        head.position.y = 1.4; // On top of body (1.2 + 0.2)
+        head.castShadow = true;
+        this.mesh.add(head);
+
+        // Render Settings (Keep robust visibility)
+        this.mesh.renderOrder = 0;
 
         console.log(`[RemotePlayer] Created ${id} at ${this.position.x}, ${this.position.y}, ${this.position.z}`);
         this.scene.add(this.mesh);
