@@ -11,9 +11,9 @@ export class RemotePlayer {
         this.targetPosition = this.position.clone();
         this.targetQuaternion = this.quaternion.clone();
 
-        // Mesh (Blue Capsule to look different)
-        const geometry = new THREE.CapsuleGeometry(0.5, 1.8, 4, 8);
-        const material = new THREE.MeshStandardMaterial({ color: 0x0000ff }); // Blue
+        // Mesh (Debug Box)
+        const geometry = new THREE.BoxGeometry(1, 2, 1);
+        const material = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // Red
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.position.copy(this.position);
@@ -21,6 +21,7 @@ export class RemotePlayer {
         // Name tag or ID?
         // for now just mesh
 
+        console.log(`[RemotePlayer] Created ${id} at ${this.position.x}, ${this.position.y}, ${this.position.z}`);
         this.scene.add(this.mesh);
     }
 

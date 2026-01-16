@@ -5,10 +5,9 @@ const lobbyInput = document.getElementById('lobby-input');
 const joinBtn = document.getElementById('join-btn');
 
 function joinGame() {
-    const lobbyName = lobbyInput.value.trim();
+    let lobbyName = lobbyInput.value.trim();
     if (!lobbyName) {
-        alert("Please enter a lobby name!");
-        return;
+        lobbyName = "lobby1"; // Default to lobby1
     }
 
     // Hide UI

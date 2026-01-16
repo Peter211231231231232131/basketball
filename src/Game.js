@@ -69,6 +69,15 @@ export class Game {
         // Networking (Initialized in init start for join_lobby)
         // this.socket assigned above
 
+        // Handle Throw Event
+        this.player.onThrow((pos, vel) => {
+            this.socket.emit('ball_update', {
+                ownerId: null, // Released
+                position: pos,
+                velocity: vel
+            });
+        });
+
 
         this.socket.on('init', (data) => {
             console.log("Received INIT payload:", data);
@@ -123,6 +132,7 @@ export class Game {
                 } else {
                     // Update Remote
                     if (!this.remotePlayers[id]) {
+                        console.log(`[Game] Found new remote player ${id} in world_state`);
                         this.remotePlayers[id] = new RemotePlayer(this.scene, id, pData);
                     }
                     this.remotePlayers[id].updateData(pData);
@@ -285,13 +295,19 @@ export class Game {
                 quaternion: { x: q.x, y: q.y, z: q.z, w: q.w }
             });
 
-            // Emit Ball State if I own it (Still Hybrid/Client Auth for Ball for now)
+            // Emit Ball State if I own it
             if (this.player.hasBall) {
                 this.socket.emit('ball_update', {
                     ownerId: this.socket.id,
                     position: this.ball.mesh.position,
                     velocity: this.ball.velocity
                 });
+            } else {
+                // If I just threw it, I need to send the initial Velocity!
+                // This is tricky. The 'ball_update' listener on server adds to state.
+                // If I am not owner, I should not emit.
+                // The throw logic in Player.js needs to set velocity, and we need to send that ONE time.
+                // Or better: Server handles physics, so if I throw, I declare "I release ball with Velocity V".
             }
         }
 

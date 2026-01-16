@@ -70,6 +70,36 @@ setInterval(() => {
             };
         }
 
+        // Update Ball Physics (Simple Server Authoritative)
+        const ball = lobby.ballState;
+        if (!ball.ownerId) {
+            // Gravity
+            ball.velocity.y -= 25.0 * delta; // Gravity
+            // Air Resistance
+            ball.velocity.x -= ball.velocity.x * 2.0 * delta;
+            ball.velocity.z -= ball.velocity.z * 2.0 * delta;
+
+            // Move
+            ball.position.x += ball.velocity.x * delta;
+            ball.position.y += ball.velocity.y * delta;
+            ball.position.z += ball.velocity.z * delta;
+
+            // Simple Floor Collision
+            if (ball.position.y < 0.5) {
+                ball.position.y = 0.5;
+                ball.velocity.y = Math.abs(ball.velocity.y) * 0.7; // Bounce
+                if (ball.velocity.y < 1.0) ball.velocity.y = 0;
+            }
+
+            // Wall Collisions (Simple Bounds)
+            if (ball.position.x > 10 || ball.position.x < -10) ball.velocity.x *= -0.8;
+            if (ball.position.z > 17 || ball.position.z < -17) ball.velocity.z *= -0.8;
+        } else {
+            // Owned by player: Position update logic handled by receiving client input?
+            // No, usually receiving client tells us where it is, OR we attach to player server-side.
+            // For now, let's keep the client telling us (Hybrid) via 'ball_update'
+        }
+
         // Broadcast World State
         // Only if players exist
         if (Object.keys(lobby.players).length > 0) {

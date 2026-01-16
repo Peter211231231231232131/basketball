@@ -167,6 +167,30 @@ export class Player {
         this.camera.position.set(pos.x, pos.y, pos.z);
     }
 
+    // New method to register callback
+    onThrow(callback) {
+        this.throwCallback = callback;
+    }
+
+    attemptThrow() {
+        if (this.hasBall && this.throwCooldown <= 0) {
+            const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion).normalize();
+            const velocity = dir.multiplyScalar(this.currentPower);
+
+            // Local Physics (release for instant feedback, though server auth will override)
+            this.ball.velocity.copy(velocity);
+            this.ball.owner = null;
+            this.hasBall = false;
+            this.throwCooldown = 1.0;
+
+            // Notify Game/Server
+            if (this.throwCallback) {
+                this.throwCallback(this.ball.mesh.position, velocity);
+            }
+            console.log("Player Threw Ball:", velocity);
+        }
+    }
+
     update(delta, collidables) {
         if (document.pointerLockElement !== document.body) {
             // this.velocity.set(0, 0, 0); // No local velocity resets needed
@@ -186,12 +210,17 @@ export class Player {
         }
 
         if (this.hasBall && this.ball) {
-            // Visual Carry
+            // Visual Carry (Client Side)
             const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion).normalize();
             const holdPos = this.camera.position.clone().add(dir.multiplyScalar(1.0));
             holdPos.y -= 0.2;
             this.ball.mesh.position.copy(holdPos);
         }
+
+        // Logic for Throwing (Handled in input listener really, but we need to tell server)
+        // We will move the throw event emission to the Key/Mouse listener in Player.js -> Game.js?
+        // Let's make Player.js emit a custom event or check flags.
+
 
         // Trajectory
         if (this.showTrajectory && this.hasBall) {
