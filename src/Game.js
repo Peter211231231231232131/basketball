@@ -132,7 +132,11 @@ export class Game {
             // Sync Ball (if not owned by me)
             if (state.ballState && !this.player.hasBall) {
                 // Hybrid: Server echoes ball state
-                // this.ball.mesh.position.copy(state.ballState.position);
+                this.ball.mesh.position.copy(state.ballState.position);
+                this.ball.velocity.copy(state.ballState.velocity);
+                if (state.ballState.ownerId) {
+                    // TODO: Visual attach to remote player
+                }
             }
         });
 
@@ -274,10 +278,11 @@ export class Game {
             const inputs = this.player.getInputs();
             const viewQuat = this.player.camera.quaternion;
 
-            // Only emit if changed? For now emit every frame for smoothness/response
+            // Explicitly serialize to avoid internal property issues (_x vs x)
+            const q = this.player.camera.quaternion;
             this.socket.emit('player_input', {
                 inputs: inputs,
-                quaternion: viewQuat
+                quaternion: { x: q.x, y: q.y, z: q.z, w: q.w }
             });
 
             // Emit Ball State if I own it (Still Hybrid/Client Auth for Ball for now)

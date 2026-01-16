@@ -76,6 +76,12 @@ class ServerPlayer {
             this.velocity.z += this.tempDir.z * acceleration * delta;
         }
 
+        // Debug Vector Validity
+        if (isNaN(this.velocity.x) || isNaN(this.velocity.z)) {
+            console.error(`Invalid Velocity for ${this.id}:`, this.velocity, "Inputs:", this.inputs, "Quat:", this.quaternion);
+            this.velocity.set(0, 0, 0);
+        }
+
         // Cap speed
         const currentHorizSpeed = Math.sqrt(this.velocity.x ** 2 + this.velocity.z ** 2);
         if (currentHorizSpeed > targetSpeed) {

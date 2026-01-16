@@ -112,6 +112,11 @@ io.on('connection', (socket) => {
         const lobby = lobbies[socket.lobbyId];
         if (lobby && lobby.players[socket.id]) {
             lobby.players[socket.id].setInputs(data);
+
+            // Debug Log (Sampled)
+            if (Math.random() < 0.01) {
+                console.log(`Input accepted for ${socket.id}:`, data.inputs);
+            }
         }
     });
 
